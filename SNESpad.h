@@ -20,6 +20,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef SNESpadsCOUNT
+#define SNESpadsCOUNT 1
+#endif
+
 #ifndef SNESpad_h
 #define SNESpad_h
 
@@ -42,13 +46,15 @@ class SNESpad {
 
   public:
     SNESpad();
-    SNESpad(int strobe, int clock, int data);
-    int buttons();
+    SNESpad(int strobe, int clock, int data[SNESpadsCOUNT]);
+    void buttons(int states[SNESpadsCOUNT]);
 
   private:
     void strobe();
-    int shiftin();
-    int m_strobe, m_clock, m_data;
+    void shiftin();
+	int m_strobe, m_clock;
+	int m_data[SNESpadsCOUNT];
+	int m_shift[SNESpadsCOUNT];
 
 };
 

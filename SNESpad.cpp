@@ -1,6 +1,7 @@
 /*
   SNESpad - Arduino library for interfacing with an SNES joystick
 
+  Version: 1.4 (06/12/2016) - added multiple controller support
   Version: 1.3 (11/12/2010) - get rid of shortcut constructor - seems to be broken
   Version: 1.2 (05/25/2009) - put pin numbers in constructor (Pascal Hahn)
   Version: 1.1 (09/22/2008) - fixed compilation errors in arduino 0012 (Rob Duarte)
@@ -37,25 +38,35 @@
 // }
 
 // constructor
-SNESpad::SNESpad(int strobe, int clock, int data)
+SNESpad::SNESpad(int strobe, int clock, int data[SNESpadsCOUNT])
   : m_strobe (strobe),
-  m_clock (clock),
-  m_data (data)
+  m_clock (clock)
   {
-    pinMode(strobe, OUTPUT);
+	pinMode(strobe, OUTPUT);
     pinMode(clock,  OUTPUT);
-    pinMode(data, INPUT);
+	for(byte p = 0; p < SNESpadsCOUNT; p++) {
+	  m_data[p] = data[p];
+      pinMode(m_data[p], INPUT);
+    }
   }
 
-int SNESpad::buttons(void)
+void SNESpad::buttons(int states[SNESpadsCOUNT])
 {
-  int ret = 0;
-  byte i;
+  byte i, p;
+  for(p = 0; p < SNESpadsCOUNT; p++) {
+	states[p] = 0;
+  }
+  
   strobe();
   for (i = 0; i < 16; i++) {
-    ret |= shiftin() << i;
+	shiftin();
+   	for(p = 0; p < SNESpadsCOUNT; p++) {
+      states[p] |= m_shift[p] << i;
+    }
   }
-  return ~ret;
+  for(p = 0; p < SNESpadsCOUNT; p++) {
+	states[p] = ~states[p];
+  }
 }
 
 void SNESpad::strobe(void)
@@ -65,12 +76,13 @@ void SNESpad::strobe(void)
   digitalWrite(m_strobe,LOW);
 }
 
-int SNESpad::shiftin(void)
+void SNESpad::shiftin(void)
 {
-  int ret = digitalRead(m_data);
+  for(byte i = 0; i < SNESpadsCOUNT; i++) {
+    m_shift[i] = digitalRead(m_data[i]);
+  }
   delayMicroseconds(12);
   digitalWrite(m_clock,HIGH);
   delayMicroseconds(12);
   digitalWrite(m_clock,LOW);
-  return ret;
 }
